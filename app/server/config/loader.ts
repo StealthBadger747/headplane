@@ -33,6 +33,22 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 		exit(1);
 	}
 
+    if (config.server.cookie_secret_path) {
+        const secret = await loadSecretFromFile(config.server.cookie_secret_path, 'cookie secret');
+        if (!secret) {
+            exit(1);
+        }
+        config.server.cookie_secret = secret;
+    }
+
+    if (config.oidc?.headscale_api_key_path) {
+        const secret = await loadSecretFromFile(config.oidc.headscale_api_key_path, 'headscale API key');
+        if (!secret) {
+            exit(1);
+        }
+        config.oidc.headscale_api_key = secret;
+    }
+
 	if (!loadEnv) {
 		log.debug('config', 'Environment variable overrides are disabled');
 		log.debug('config', 'This also disables the loading of a .env file');
@@ -47,6 +63,42 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 	}
 
 	return config;
+}
+
+async function loadSecretFromFile(path: string, secretName: string) {
+    // We need to interpolate environment variables into the path
+    // Path formatting can be like ${ENV_NAME}/path/to/secret
+    const matches = path.match(/\${(.*?)}/g);
+    let resolvedPath = path;
+
+    if (matches) {
+        for (const match of matches) {
+            const env = match.slice(2, -1);
+            const value = process.env[env];
+            if (!value) {
+                log.error('config', 'Environment variable %s is not set', env);
+                return;
+            }
+
+            log.debug('config', 'Interpolating %s with %s', match, value);
+            resolvedPath = resolvedPath.replace(match, value);
+        }
+    }
+
+    try {
+        log.debug('config', 'Reading %s from %s', secretName, resolvedPath);
+        const secret = await readFile(resolvedPath, 'utf-8');
+        if (secret.trim().length === 0) {
+            log.error('config', 'Empty %s', secretName);
+            return;
+        }
+
+        return secret.trim();
+    } catch (error) {
+        log.error('config', 'Failed to read %s from %s', secretName, path);
+        log.error('config', 'Error: %s', error);
+        log.debug('config', 'Error details: %o', error);
+    }
 }
 
 export async function hp_loadConfig() {

@@ -5,6 +5,7 @@ const serverConfig = type({
 	host: 'string.ip',
 	port: type('string | number.integer').pipe((v) => Number(v)),
 	cookie_secret: '32 <= string <= 32',
+	cookie_secret_path: 'string?',
 	cookie_secure: stringToBool,
 	agent: type({
 		authkey: 'string = ""',
@@ -30,6 +31,7 @@ const oidcConfig = type({
 	user_storage_file: 'string = "/var/lib/headplane/users.json"',
 	disable_api_key_login: stringToBool,
 	headscale_api_key: 'string',
+	headscale_api_key_path: 'string?',
 	strict_validation: stringToBool.default(true),
 }).onDeepUndeclaredKey('reject');
 
