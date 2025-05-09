@@ -62,13 +62,24 @@ in {
                 };
 
                 cookie_secret = lib.mkOption {
-                  type = lib.types.either lib.types.str lib.types.path;
+                  type = lib.types.nullOr lib.types.str;
                   description = ''
                     The secret used to encode and decode web sessions.
                     Ensure that this is exactly 32 characters long.
                     Can be either a direct string or a path to a file containing the secret.
                   '';
                   example = "config.sops.secrets.headplane.path";
+                };
+
+                cookie_secret_path = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = ''
+                    Path to a file containing the cookie secret.
+                    The secret must be exactly 32 characters long.
+                    Can be used instead of cookie_secret.
+                  '';
+                  example = "config.sops.secrets.headplane_cookie.path";
                 };
 
                 cookie_secure = lib.mkOption {
@@ -173,11 +184,21 @@ in {
                 };
 
                 client_secret = lib.mkOption {
-                  type = lib.types.either lib.types.str lib.types.path;
+                  type = lib.types.nullOr lib.types.str;
                   description = ''
                     The client secret for the OIDC client.
                   '';
                   example = "config.sops.secrets.oidc_secret.path";
+                };
+
+                client_secret_path = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = ''
+                    Path to a file containing the OIDC client secret.
+                    Can be used instead of client_secret.
+                  '';
+                  example = "config.sops.secrets.oidc_client_secret.path";
                 };
 
                 disable_api_key_login = lib.mkOption {
@@ -196,11 +217,21 @@ in {
                 };
 
                 headscale_api_key = lib.mkOption {
-                  type = lib.types.either lib.types.str lib.types.path;
+                  type = lib.types.nullOr lib.types.str;
                   description = ''
                     If you are using OIDC, you need to generate an API key
                     that can be used to authenticate other sessions when signing in.
                     This can be done with `headscale apikeys create --expiration 999d`.
+                  '';
+                  example = "config.sops.secrets.headscale_api_key.path";
+                };
+
+                headscale_api_key_path = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = ''
+                    Path to a file containing the Headscale API key.
+                    Can be used instead of headscale_api_key.
                   '';
                   example = "config.sops.secrets.headscale_api_key.path";
                 };
