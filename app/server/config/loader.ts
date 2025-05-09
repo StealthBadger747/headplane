@@ -33,13 +33,13 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 		exit(1);
 	}
 
-    if (config.server.cookie_secret_path) {
-        const secret = await loadSecretFromFile(config.server.cookie_secret_path, 'cookie secret');
-        if (!secret) {
-            exit(1);
-        }
-        config.server.cookie_secret = secret;
-    }
+	if (config.server.cookie_secret_path) {
+		const secret = await loadSecretFromFile(config.server.cookie_secret_path, 'cookie secret', 32);
+		if (!secret) {
+			exit(1);
+		}
+		config.server.cookie_secret = secret;
+	}
 
     if (config.oidc?.headscale_api_key_path) {
         const secret = await loadSecretFromFile(config.oidc.headscale_api_key_path, 'headscale API key');
@@ -65,7 +65,7 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 	return config;
 }
 
-async function loadSecretFromFile(path: string, secretName: string) {
+async function loadSecretFromFile(path: string, secretName: string, requiredLength?: number) {
     // We need to interpolate environment variables into the path
     // Path formatting can be like ${ENV_NAME}/path/to/secret
     const matches = path.match(/\${(.*?)}/g);
@@ -93,7 +93,16 @@ async function loadSecretFromFile(path: string, secretName: string) {
             return;
         }
 
-        return secret.trim();
+        const trimmedSecret = secret.trim();
+        
+        // Add length validation if requiredLength is specified
+        if (requiredLength && trimmedSecret.length !== requiredLength) {
+            log.error('config', '%s must be exactly length %d (was %d)', 
+                secretName, requiredLength, trimmedSecret.length);
+            return;
+        }
+
+        return trimmedSecret;
     } catch (error) {
         log.error('config', 'Failed to read %s from %s', secretName, path);
         log.error('config', 'Error: %s', error);
