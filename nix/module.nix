@@ -63,6 +63,7 @@ in {
 
                 cookie_secret = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
+                  default = null;
                   description = ''
                     The secret used to encode and decode web sessions.
                     Ensure that this is exactly 32 characters long.
@@ -185,6 +186,7 @@ in {
 
                 client_secret = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
+                  default = null;
                   description = ''
                     The client secret for the OIDC client.
                   '';
@@ -218,6 +220,7 @@ in {
 
                 headscale_api_key = lib.mkOption {
                   type = lib.types.nullOr lib.types.str;
+                  default = null;
                   description = ''
                     If you are using OIDC, you need to generate an API key
                     that can be used to authenticate other sessions when signing in.
