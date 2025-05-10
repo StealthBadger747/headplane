@@ -1,6 +1,13 @@
 import { type } from 'arktype';
 
 const stringToBool = type('string | boolean').pipe((v) => Boolean(v));
+const agentConfig = type({
+	authkey: type('string | null'),
+	authkey_path: 'string?',
+	ttl: 'number.integer = 180000', // Default to 3 minutes
+	cache_path: 'string = "/var/lib/headplane/agent_cache.json"',
+}).onDeepUndeclaredKey('reject');
+
 const serverConfig = type({
 	host: 'string.ip',
 	port: type('string | number.integer').pipe((v) => Number(v)),
@@ -12,21 +19,21 @@ const serverConfig = type({
 	}),
 	cookie_secret_path: 'string?',
 	cookie_secure: stringToBool,
-	agent: type({
-		authkey: 'string = ""',
-		ttl: 'number.integer = 180000', // Default to 3 minutes
-		cache_path: 'string = "/var/lib/headplane/agent_cache.json"',
-	})
-		.onDeepUndeclaredKey('reject')
-		.default(() => ({
-			authkey: '',
-			ttl: 180000,
-			cache_path: '/var/lib/headplane/agent_cache.json',
-		})),
+	agent: agentConfig.default(() => ({
+		authkey: null,
+		authkey_path: null,
+		ttl: 180000,
+		cache_path: '/var/lib/headplane/agent_cache.json',
+	})),
 }).pipe((v) => {
 	if ((v.cookie_secret == null) === (v.cookie_secret_path == null)) {
 		throw new Error(
 			'Must specify either cookie_secret or cookie_secret_path, but not both',
+		);
+	}
+	if ((v.agent.authkey == null) === (v.agent.authkey_path == null)) {
+		throw new Error(
+			'Must specify either agent.authkey or agent.authkey_path, but not both',
 		);
 	}
 	return v;
@@ -63,11 +70,28 @@ const oidcConfig = type({
 
 const headscaleConfig = type({
 	url: type('string.url').pipe((v) => (v.endsWith('/') ? v.slice(0, -1) : v)),
+	tls_cert: type('string | null'),
 	tls_cert_path: 'string?',
+	tls_key: type('string | null'),
+	tls_key_path: 'string?',
 	public_url: 'string.url?',
 	config_path: 'string?',
 	config_strict: stringToBool,
-}).onDeepUndeclaredKey('reject');
+})
+	.pipe((v) => {
+		if ((v.tls_cert == null) === (v.tls_cert_path == null)) {
+			throw new Error(
+				'Must specify either tls_cert or tls_cert_path, but not both',
+			);
+		}
+		if ((v.tls_key == null) === (v.tls_key_path == null)) {
+			throw new Error(
+				'Must specify either tls_key or tls_key_path, but not both',
+			);
+		}
+		return v;
+	})
+	.onDeepUndeclaredKey('reject');
 
 const containerLabel = type({
 	name: 'string',
@@ -98,6 +122,13 @@ const integrationConfig = type({
 }).onDeepUndeclaredKey('reject');
 
 // Define partial types by making all fields optional
+const partialAgentConfig = type({
+	authkey: type('string | null'),
+	authkey_path: 'string?',
+	ttl: 'number.integer?',
+	cache_path: 'string?',
+});
+
 const partialServerConfig = type({
 	host: 'string.ip?',
 	port: type('string | number.integer').pipe((v) =>
@@ -106,11 +137,7 @@ const partialServerConfig = type({
 	cookie_secret: type('string | null'),
 	cookie_secret_path: 'string?',
 	cookie_secure: stringToBool,
-	agent: type({
-		authkey: 'string?',
-		ttl: 'number.integer?',
-		cache_path: 'string?',
-	}),
+	agent: partialAgentConfig,
 });
 
 const partialOidcConfig = type({
@@ -132,7 +159,10 @@ const partialHeadscaleConfig = type({
 	url: type('string.url').pipe((v) =>
 		v === undefined ? v : v.endsWith('/') ? v.slice(0, -1) : v,
 	),
+	tls_cert: type('string | null'),
 	tls_cert_path: 'string?',
+	tls_key: type('string | null'),
+	tls_key_path: 'string?',
 	public_url: 'string.url?',
 	config_path: 'string?',
 	config_strict: stringToBool,

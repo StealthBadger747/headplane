@@ -34,28 +34,71 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 	}
 
 	if (config.server.cookie_secret_path) {
-		const secret = await loadSecretFromFile(config.server.cookie_secret_path, 'cookie secret', 32);
+		const secret = await loadSecretFromFile(
+			config.server.cookie_secret_path,
+			'cookie secret',
+			32,
+		);
 		if (!secret) {
 			exit(1);
 		}
 		config.server.cookie_secret = secret;
 	}
 
-    if (config.oidc?.client_secret_path) {
-        const secret = await loadSecretFromFile(config.oidc.client_secret_path, 'OIDC client secret');
-        if (!secret) {
-            exit(1);
-        }
-        config.oidc.client_secret = secret;
-    }
+	if (config.server.agent.authkey_path) {
+		const secret = await loadSecretFromFile(
+			config.server.agent.authkey_path,
+			'agent auth key',
+		);
+		if (!secret) {
+			exit(1);
+		}
+		config.server.agent.authkey = secret;
+	}
 
-    if (config.oidc?.headscale_api_key_path) {
-        const secret = await loadSecretFromFile(config.oidc.headscale_api_key_path, 'headscale API key');
-        if (!secret) {
-            exit(1);
-        }
-        config.oidc.headscale_api_key = secret;
-    }
+	if (config.headscale.tls_cert_path) {
+		const cert = await loadSecretFromFile(
+			config.headscale.tls_cert_path,
+			'TLS certificate',
+		);
+		if (!cert) {
+			exit(1);
+		}
+		config.headscale.tls_cert = cert;
+	}
+
+	if (config.headscale.tls_key_path) {
+		const key = await loadSecretFromFile(
+			config.headscale.tls_key_path,
+			'TLS key',
+		);
+		if (!key) {
+			exit(1);
+		}
+		config.headscale.tls_key = key;
+	}
+
+	if (config.oidc?.client_secret_path) {
+		const secret = await loadSecretFromFile(
+			config.oidc.client_secret_path,
+			'OIDC client secret',
+		);
+		if (!secret) {
+			exit(1);
+		}
+		config.oidc.client_secret = secret;
+	}
+
+	if (config.oidc?.headscale_api_key_path) {
+		const secret = await loadSecretFromFile(
+			config.oidc.headscale_api_key_path,
+			'headscale API key',
+		);
+		if (!secret) {
+			exit(1);
+		}
+		config.oidc.headscale_api_key = secret;
+	}
 
 	if (!loadEnv) {
 		log.debug('config', 'Environment variable overrides are disabled');
@@ -73,49 +116,58 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 	return config;
 }
 
-async function loadSecretFromFile(path: string, secretName: string, requiredLength?: number) {
-    // We need to interpolate environment variables into the path
-    // Path formatting can be like ${ENV_NAME}/path/to/secret
-    const matches = path.match(/\${(.*?)}/g);
-    let resolvedPath = path;
+async function loadSecretFromFile(
+	path: string,
+	secretName: string,
+	requiredLength?: number,
+) {
+	// We need to interpolate environment variables into the path
+	// Path formatting can be like ${ENV_NAME}/path/to/secret
+	const matches = path.match(/\${(.*?)}/g);
+	let resolvedPath = path;
 
-    if (matches) {
-        for (const match of matches) {
-            const env = match.slice(2, -1);
-            const value = process.env[env];
-            if (!value) {
-                log.error('config', 'Environment variable %s is not set', env);
-                return;
-            }
+	if (matches) {
+		for (const match of matches) {
+			const env = match.slice(2, -1);
+			const value = process.env[env];
+			if (!value) {
+				log.error('config', 'Environment variable %s is not set', env);
+				return;
+			}
 
-            log.debug('config', 'Interpolating %s with %s', match, value);
-            resolvedPath = resolvedPath.replace(match, value);
-        }
-    }
+			log.debug('config', 'Interpolating %s with %s', match, value);
+			resolvedPath = resolvedPath.replace(match, value);
+		}
+	}
 
-    try {
-        log.debug('config', 'Reading %s from %s', secretName, resolvedPath);
-        const secret = await readFile(resolvedPath, 'utf-8');
-        if (secret.trim().length === 0) {
-            log.error('config', 'Empty %s', secretName);
-            return;
-        }
+	try {
+		log.debug('config', 'Reading %s from %s', secretName, resolvedPath);
+		const secret = await readFile(resolvedPath, 'utf-8');
+		if (secret.trim().length === 0) {
+			log.error('config', 'Empty %s', secretName);
+			return;
+		}
 
-        const trimmedSecret = secret.trim();
-        
-        // Add length validation if requiredLength is specified
-        if (requiredLength && trimmedSecret.length !== requiredLength) {
-            log.error('config', '%s must be exactly length %d (was %d)', 
-                secretName, requiredLength, trimmedSecret.length);
-            return;
-        }
+		const trimmedSecret = secret.trim();
 
-        return trimmedSecret;
-    } catch (error) {
-        log.error('config', 'Failed to read %s from %s', secretName, path);
-        log.error('config', 'Error: %s', error);
-        log.debug('config', 'Error details: %o', error);
-    }
+		// Add length validation if requiredLength is specified
+		if (requiredLength && trimmedSecret.length !== requiredLength) {
+			log.error(
+				'config',
+				'%s must be exactly length %d (was %d)',
+				secretName,
+				requiredLength,
+				trimmedSecret.length,
+			);
+			return;
+		}
+
+		return trimmedSecret;
+	} catch (error) {
+		log.error('config', 'Failed to read %s from %s', secretName, path);
+		log.error('config', 'Error: %s', error);
+		log.debug('config', 'Error details: %o', error);
+	}
 }
 
 export async function hp_loadConfig() {

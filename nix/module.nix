@@ -92,6 +92,46 @@ in {
                     Recommended to be true in production.
                   '';
                 };
+
+                agent = lib.mkOption {
+                  type = lib.types.submodule {
+                    options = {
+                      authkey = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          The auth key used to authenticate the agent with Headplane.
+                          Can be either a direct string or a path to a file containing the key.
+                        '';
+                        example = "config.sops.secrets.agent_authkey.path";
+                      };
+
+                      authkey_path = lib.mkOption {
+                        type = lib.types.nullOr lib.types.path;
+                        default = null;
+                        description = ''
+                          Path to a file containing the agent auth key.
+                          Can be used instead of authkey.
+                        '';
+                        example = "config.sops.secrets.agent_authkey.path";
+                      };
+
+                      ttl = lib.mkOption {
+                        type = lib.types.int;
+                        default = 180000;
+                        description = "How long to cache agent information (in milliseconds).";
+                      };
+
+                      cache_path = lib.mkOption {
+                        type = lib.types.str;
+                        default = "/var/lib/headplane/agent_cache.json";
+                        description = "Where to store the agent cache.";
+                      };
+                    };
+                  };
+                  default = {};
+                  description = "Agent configuration for the Headplane agent.";
+                };
               };
             };
             default = {};
@@ -111,6 +151,46 @@ in {
                     IMPORTANT: If you are using TLS this MUST be set to `https://`.
                   '';
                   example = "https://headscale.example.com";
+                };
+
+                tls_cert = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    TLS certificate for HTTPS connections.
+                    Can be either a direct string or a path to a file containing the certificate.
+                  '';
+                  example = "config.sops.secrets.tls_cert.path";
+                };
+
+                tls_cert_path = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = ''
+                    Path to a file containing the TLS certificate.
+                    Can be used instead of tls_cert.
+                  '';
+                  example = "config.sops.secrets.tls_cert.path";
+                };
+
+                tls_key = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    TLS private key for HTTPS connections.
+                    Can be either a direct string or a path to a file containing the key.
+                  '';
+                  example = "config.sops.secrets.tls_key.path";
+                };
+
+                tls_key_path = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = ''
+                    Path to a file containing the TLS private key.
+                    Can be used instead of tls_key.
+                  '';
+                  example = "config.sops.secrets.tls_key.path";
                 };
 
                 config_path = lib.mkOption {

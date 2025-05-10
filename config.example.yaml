@@ -5,12 +5,32 @@ server:
 
   # The secret used to encode and decode web sessions
   # Ensure that this is exactly 32 characters long
+  # Either this or cookie_secret_path must be set
   cookie_secret: "<change_me_to_something_secure!>"
+  # You can alternatively set cookie_secret_path to read the secret from disk.
+  # The path specified can resolve environment variables, making integration
+  # with systemd's `LoadCredential` straightforward:
+  # cookie_secret_path: "${CREDENTIALS_DIRECTORY}/cookie_secret"
 
   # Should the cookies only work over HTTPS?
   # Set to false if running via HTTP without a proxy
   # (I recommend this is true in production)
   cookie_secure: true
+
+  # Agent configuration for the Headplane agent
+  agent:
+    # The auth key used to authenticate the agent with Headplane
+    # Either this or authkey_path must be set
+    authkey: "<your-agent-auth-key>"
+    # You can alternatively set authkey_path to read the key from disk.
+    # The path specified can resolve environment variables:
+    # authkey_path: "${CREDENTIALS_DIRECTORY}/agent_authkey"
+    
+    # How long to cache agent information (in milliseconds)
+    ttl: 180000  # 3 minutes
+    
+    # Where to store the agent cache
+    cache_path: "/var/lib/headplane/agent_cache.json"
 
 # Headscale specific settings to allow Headplane to talk
 # to Headscale and access deep integration features
@@ -22,10 +42,20 @@ headscale:
   # IMPORTANT: If you are using TLS this MUST be set to `https://`
   url: "http://headscale:5000"
 
-  # If you use the TLS configuration in Headscale, and you are not using
-  # Let's Encrypt for your certificate, pass in the path to the certificate.
-  # (This has no effect `url` does not start with `https://`)
+  # TLS certificate configuration
+  # Either tls_cert and tls_key or tls_cert_path and tls_key_path must be set
+  # if using HTTPS
+  tls_cert: |
+    -----BEGIN CERTIFICATE-----
+    Your certificate here
+    -----END CERTIFICATE-----
+  tls_key: |
+    -----BEGIN PRIVATE KEY-----
+    Your private key here
+    -----END PRIVATE KEY-----
+  # You can alternatively set tls_cert_path and tls_key_path to read from disk:
   # tls_cert_path: "/var/lib/headplane/tls.crt"
+  # tls_key_path: "/var/lib/headplane/tls.key"
 
   # Optional, public URL if they differ
   # This affects certain parts of the web UI
@@ -104,6 +134,8 @@ oidc:
   #
   # This can be done with `headscale apikeys create --expiration 999d`
   headscale_api_key: "<your-headscale-api-key>"
+  # You can alternatively set headscale_api_key_path to read the key from disk:
+  # headscale_api_key_path: "${CREDENTIALS_DIRECTORY}/headscale_api_key"
 
   # Optional, but highly recommended otherwise Headplane
   # will attempt to automatically guess this from the issuer
