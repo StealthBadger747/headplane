@@ -4,7 +4,11 @@ const stringToBool = type('string | boolean').pipe((v) => Boolean(v));
 const serverConfig = type({
 	host: 'string.ip',
 	port: type('string | number.integer').pipe((v) => Number(v)),
-	cookie_secret: '32 <= string <= 32 | null',  // Allow null
+	cookie_secret: type('string | null').pipe((v) => {
+		if (v === null) return v;
+		if (v.length !== 32) throw new Error('cookie_secret must be exactly 32 characters long');
+		return v;
+	}),
 	cookie_secret_path: 'string?',
 	cookie_secure: stringToBool,
 	agent: type({
@@ -28,7 +32,7 @@ const serverConfig = type({
 const oidcConfig = type({
 	issuer: 'string.url',
 	client_id: 'string',
-	client_secret: 'string? | null',  // Allow null
+	client_secret: type('string | null'),
 	client_secret_path: 'string?',
 	token_endpoint_auth_method:
 	  '"client_secret_basic" | "client_secret_post" | "client_secret_jwt"',
