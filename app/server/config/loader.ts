@@ -41,6 +41,14 @@ export async function loadConfig({ loadEnv, path }: EnvOverrides) {
 		config.server.cookie_secret = secret;
 	}
 
+    if (config.oidc?.client_secret_path) {
+        const secret = await loadSecretFromFile(config.oidc.client_secret_path, 'OIDC client secret');
+        if (!secret) {
+            exit(1);
+        }
+        config.oidc.client_secret = secret;
+    }
+
     if (config.oidc?.headscale_api_key_path) {
         const secret = await loadSecretFromFile(config.oidc.headscale_api_key_path, 'headscale API key');
         if (!secret) {
