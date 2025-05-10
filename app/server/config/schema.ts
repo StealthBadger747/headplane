@@ -88,11 +88,58 @@ const integrationConfig = type({
 	'proc?': procConfig,
 }).onDeepUndeclaredKey('reject');
 
+// Define partial types by making all fields optional
+const partialServerConfig = type({
+	host: 'string.ip?',
+	port: type('string | number.integer?').pipe((v) => v === undefined ? v : Number(v)),
+	cookie_secret: type('string | null?'),
+	cookie_secret_path: 'string?',
+	cookie_secure: stringToBool,
+	agent: type({
+		authkey: 'string?',
+		ttl: 'number.integer?',
+		cache_path: 'string?',
+	}).optional(),
+});
+
+const partialOidcConfig = type({
+	issuer: 'string.url?',
+	client_id: 'string?',
+	client_secret: type('string | null?'),
+	client_secret_path: 'string?',
+	token_endpoint_auth_method: '"client_secret_basic" | "client_secret_post" | "client_secret_jwt"?',
+	redirect_uri: 'string.url?',
+	user_storage_file: 'string?',
+	disable_api_key_login: stringToBool,
+	headscale_api_key: 'string?',
+	headscale_api_key_path: 'string?',
+	strict_validation: stringToBool,
+});
+
+const partialHeadscaleConfig = type({
+	url: type('string.url?').pipe((v) => v === undefined ? v : (v.endsWith('/') ? v.slice(0, -1) : v)),
+	tls_cert_path: 'string?',
+	public_url: 'string.url?',
+	config_path: 'string?',
+	config_strict: stringToBool,
+});
+
 const partialIntegrationConfig = type({
-	'docker?': dockerConfig.partial(),
-	'kubernetes?': kubernetesConfig.partial(),
-	'proc?': procConfig.partial(),
-}).partial();
+	'docker?': type({
+		enabled: stringToBool,
+		container_name: 'string?',
+		socket: 'string?',
+		container_label: containerLabel,
+	}).optional(),
+	'kubernetes?': type({
+		enabled: stringToBool,
+		pod_name: 'string?',
+		validate_manifest: stringToBool,
+	}).optional(),
+	'proc?': type({
+		enabled: stringToBool,
+	}).optional(),
+});
 
 export const headplaneConfig = type({
 	debug: stringToBool,
@@ -104,11 +151,11 @@ export const headplaneConfig = type({
 
 export const partialHeadplaneConfig = type({
 	debug: stringToBool,
-	server: serverConfig.partial(),
-	'oidc?': oidcConfig.partial(),
+	server: partialServerConfig,
+	'oidc?': partialOidcConfig,
 	'integration?': partialIntegrationConfig,
-	headscale: headscaleConfig.partial(),
-}).partial();
+	headscale: partialHeadscaleConfig,
+});
 
 export type HeadplaneConfig = typeof headplaneConfig.infer;
 export type PartialHeadplaneConfig = typeof partialHeadplaneConfig.infer;
