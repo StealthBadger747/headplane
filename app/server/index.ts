@@ -54,7 +54,7 @@ const appLoadContext = {
 			name: '_hp_session',
 			maxAge: 60 * 60 * 24, // 24 hours
 			secure: config.server.cookie_secure,
-			secrets: [config.server.cookie_secret],
+			secrets: [config.server.cookie_secret!],
 		},
 		config.oidc?.user_storage_file,
 	),
