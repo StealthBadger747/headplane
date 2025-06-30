@@ -19,7 +19,8 @@ const stringToBool = type('string | boolean').pipe((v) => {
 const serverConfig = type({
 	host: 'string.ip',
 	port: type('string | number.integer').pipe((v) => Number(v)),
-	cookie_secret: '32 <= string <= 32',
+	data_path: 'string = "/var/lib/headplane/"',
+	cookie_secret: '(32 <= string <= 32)?',
 	cookie_secure: stringToBool,
 });
 
@@ -33,7 +34,7 @@ const oidcConfig = type({
 	redirect_uri: 'string.url?',
 	user_storage_file: 'string = "/var/lib/headplane/users.json"',
 	disable_api_key_login: stringToBool,
-	headscale_api_key: 'string',
+	headscale_api_key: 'string?',
 	strict_validation: stringToBool.default(true),
 }).onDeepUndeclaredKey('reject');
 
