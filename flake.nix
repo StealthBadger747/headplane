@@ -51,9 +51,11 @@ rec {
           ${providedPackages}
         '';
         packages = [
+          pkgs.biome
           pkgs.go
-          pkgs.nodejs-slim_22
-          pkgs.pnpm_10
+          pkgs.mise
+          pkgs.nodejs
+          pkgs.pnpm
           pkgs.typescript-language-server
         ];
         env = [];

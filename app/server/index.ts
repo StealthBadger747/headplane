@@ -1,10 +1,11 @@
+import { join } from 'node:path';
 import { env, versions } from 'node:process';
 import { createHonoServer } from 'react-router-hono-server/node';
-
 import log from '~/utils/log';
 import { configureConfig, configureLogger, envVariables } from './config/env';
 import { loadIntegration } from './config/integration';
 import { loadConfig } from './config/loader';
+import { createDbClient } from './db/client.server';
 import { createApiClient } from './headscale/api-client';
 import { loadHeadscaleConfig } from './headscale/config-loader';
 import { loadAgentSocket } from './web/agent';
@@ -28,6 +29,13 @@ const config = await loadConfig(
 	}),
 );
 
+const agentManager = await loadAgentSocket(
+	config.integration?.agent,
+	config.headscale.url,
+);
+
+const db = await createDbClient(join(config.server.data_path, 'hp_persist.db'));
+
 // We also use this file to load anything needed by the react router code.
 // These are usually per-request things that we need access to, like the
 // helper that can issue and revoke cookies.
@@ -46,7 +54,7 @@ const appLoadContext = {
 			name: '_hp_session',
 			maxAge: 60 * 60 * 24, // 24 hours
 			secure: config.server.cookie_secure,
-			secrets: [config.server.cookie_secret],
+			secrets: [config.server.cookie_secret!],
 		},
 		config.oidc?.user_storage_file,
 	),
@@ -56,12 +64,10 @@ const appLoadContext = {
 		config.headscale.tls_cert_path,
 	),
 
-	agents: await loadAgentSocket(
-		config.integration?.agent,
-		config.headscale.url,
-	),
+	agents: agentManager,
 	integration: await loadIntegration(config.integration),
 	oidc: config.oidc ? await createOidcClient(config.oidc) : undefined,
+	db,
 };
 
 declare module 'react-router' {
