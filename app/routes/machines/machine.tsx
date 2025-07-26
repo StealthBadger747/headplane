@@ -2,7 +2,6 @@ import { CheckCircle, CircleSlash, Info, UserCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import { Link as RemixLink, useLoaderData } from 'react-router';
-import { mapTag } from 'yaml/util';
 import Attribute from '~/components/Attribute';
 import Button from '~/components/Button';
 import Card from '~/components/Card';
@@ -109,7 +108,7 @@ export default function Page() {
 					</span>
 					<div className="flex items-center gap-x-2.5 mt-1">
 						<UserCircle />
-						{node.user.name || node.user.email}
+						{node.user.name || node.user.displayName || node.user.email || node.user.id}
 					</div>
 				</div>
 				<div className="p-2 pl-4">
@@ -254,7 +253,7 @@ export default function Page() {
 				className="w-full max-w-full grid grid-cols-1 lg:grid-cols-2 gap-y-2 sm:gap-x-12"
 			>
 				<div className="flex flex-col gap-1">
-					<Attribute name="Creator" value={node.user.name || node.user.email} />
+					<Attribute name="Creator" value={node.user.name || node.user.displayName || node.user.email || node.user.id} />
 					<Attribute name="Machine name" value={node.givenName} />
 					<Attribute
 						tooltip="OS hostname is published by the machine’s operating system and is used as the default name for the machine."
